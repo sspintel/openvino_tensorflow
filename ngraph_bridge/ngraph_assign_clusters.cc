@@ -431,6 +431,8 @@ Status AssignClusters(Graph* graph) {
   std::unordered_map<std::string, tuple<string, string, vector<string>>>
       deadness_info;
 
+  std::vector<string> dynamic_input_nodes({"Transpose", "Reshape"});
+
   do {
     changed = false;
 
@@ -443,6 +445,40 @@ Status AssignClusters(Graph* graph) {
                      << ">"
                      << "[" << edge->dst_input() << "]";
     };
+
+    // check for input nodes with dynamic shapes and unmark them
+    for (auto edge : graph->edges()) {
+      Node* src = edge->src();
+      Node* dst = edge->dst();
+
+      if (!src->IsOp() || !dst->IsOp()) {
+          if (std::find(dynamic_input_nodes.begin(), dynamic_input_nodes.end(), dst->type_string()) != dynamic_input_nodes.end()) {
+            dst->ClearAttr("_ngraph_marked_for_clustering");
+          }
+        continue;
+      }
+
+      if (!NodeIsMarkedForClustering(src) || !NodeIsMarkedForClustering(dst)) {
+          if (std::find(dynamic_input_nodes.begin(), dynamic_input_nodes.end(), dst->type_string()) != dynamic_input_nodes.end()) {
+            dst->ClearAttr("_ngraph_marked_for_clustering");
+          }
+        continue;
+      }
+
+#if !defined(NGRAPH_TF_DISABLE_DEADNESS_CHECK)
+      // check if the edge can be contracted with respect to deadness
+      bool is_deadness_ok = false;
+      TF_RETURN_IF_ERROR(
+          CanContractEdgeDeadnessCheck(edge, cluster_map, is_deadness_ok));
+      if (!is_deadness_ok) {
+        // do not contract, src and dst node cannot be in the same cluster
+          if (std::find(dynamic_input_nodes.begin(), dynamic_input_nodes.end(), dst->type_string()) != dynamic_input_nodes.end()) {
+            dst->ClearAttr("_ngraph_marked_for_clustering");
+          }
+        continue;
+      }
+#endif
+    }
 
     for (auto edge : graph->edges()) {
       Node* src = edge->src();

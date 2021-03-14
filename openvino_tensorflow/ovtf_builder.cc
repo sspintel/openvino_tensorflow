@@ -2502,27 +2502,15 @@ static Status TranslateSqueezeOp(const Node* op,
                                  Builder::OpMap& ng_op_map) {
   ng::Output<ng::Node> ng_input;
   TF_RETURN_IF_ERROR(GetInputNodes(ng_op_map, op, ng_input));
-  size_t input_dims = ng_input.get_shape().size();
 
   std::vector<int32> tf_axis;
   TF_RETURN_IF_ERROR(GetNodeAttr(op->attrs(), "squeeze_dims", &tf_axis));
+ 
+  auto ng_const = ConstructNgNode<opset::Constant>(
+      op->name(), ng::element::i32, ng::Shape{tf_axis.size()}, tf_axis);
 
-  // If input dimension is negative, make it positive
-  for (size_t i = 0; i < tf_axis.size(); i++) {
-    tf_axis[i] = tf_axis[i] < 0 ? (int32)(input_dims) + tf_axis[i] : tf_axis[i];
-  }
-
-  if (input_dims > 0 && ng_input.get_shape()[0] == 0) {
-    SaveNgOp(ng_op_map, op->name(),
-             ConstructNgNode<opset::Constant>(op->name(), ng_input.get_element_type(),
-                                         ngraph::Shape{0}, std::vector<int>({0})));
-  } else {
-    auto ng_const = ConstructNgNode<opset::Constant>(
-        op->name(), ng::element::i32, ng::Shape{tf_axis.size()}, tf_axis);
-
-    SaveNgOp(ng_op_map, op->name(),
-             ConstructNgNode<opset::Squeeze>(op->name(), ng_input, ng_const));
-  }
+  SaveNgOp(ng_op_map, op->name(),
+           ConstructNgNode<opset::Squeeze>(op->name(), ng_input, ng_const));
   return Status::OK();
 }
 

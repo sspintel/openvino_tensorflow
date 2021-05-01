@@ -21,7 +21,7 @@ chmod 400 the *.pem key.
 <img src="images/Azure_image_3.png">
 </p>
 
--	Login to the AWS instance using SSH  
+-	Login to the Azure instance using SSH  
   ```bash
   $ ssh -i *.pem <IP-addr-of-your-instance>  
   $ scp -i *.pem  <source-file> <IP-addr-of-your-instance>:/tmp

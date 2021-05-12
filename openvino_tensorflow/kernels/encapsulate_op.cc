@@ -311,6 +311,7 @@ void NGraphEncapsulateOp::Compute(OpKernelContext* ctx) {
       // expected
       ngraph::element::Type expected_elem_type;
       auto ng_element_type = ng_element->get_element_type();
+      std::cout << "LOG - result type " << i << ": " << ng_element_type << std::endl;
       if(ng_element_type == ngraph::element::Type_t::f16 && precision == "FP16")
         ng_element_type = ngraph::element::Type_t::f32;
       OP_REQUIRES_OK(ctx,

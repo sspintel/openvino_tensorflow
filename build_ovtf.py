@@ -134,7 +134,7 @@ def main():
     parser.add_argument(
         '--openvino_version',
         help="Openvino version to be used for building from source",
-        default='2021.3')
+        default='0b22d6c51c1be370576032f9480bf7b44bb5165d')
 
     parser.add_argument(
         '--python_executable',
@@ -167,7 +167,7 @@ def main():
             "cannot be used together.")
 
     assert not (arguments.openvino_version != "2021.3" and
-                arguments.openvino_version != "master"), (
+                arguments.openvino_version != "0b22d6c51c1be370576032f9480bf7b44bb5165d"), (
                     "Only 2021.2 and 2021.3 are supported OpenVINO versions")
 
     if arguments.use_openvino_from_location != '':
@@ -400,8 +400,8 @@ def main():
 
         if (arguments.openvino_version == "2021.3"):
             openvino_branch = "releases/2021/3"
-        elif (arguments.openvino_version == "master"):
-            openvino_branch = "master"
+        elif (arguments.openvino_version == "0b22d6c51c1be370576032f9480bf7b44bb5165d"):
+            openvino_branch = "0b22d6c51c1be370576032f9480bf7b44bb5165d"
 
         # Download OpenVINO
         download_repo(

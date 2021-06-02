@@ -1522,15 +1522,24 @@ static Status TranslateFusedConv2DOp(const Node* op,
 
   if (VecStrCmp(fused_ops, {"BiasAdd"}) ||
       VecStrCmp(fused_ops, {"BiasAdd", "Relu"}) ||
-      VecStrCmp(fused_ops, {"BiasAdd", "Relu6"})) {
-    if (num_args != 1) {
-      return errors::InvalidArgument(
-          "FusedConv2DBiasAdd has incompatible num_args");
+      VecStrCmp(fused_ops, {"BiasAdd", "Relu6"}) ||
+      VecStrCmp(fused_ops, {"BiasAdd", "Add", "Relu"})) {
+    ng::Output<ng::Node> ng_input, ng_filter, ng_bias, ng_conv, ng_input2;
+    if (VecStrCmp(fused_ops, {"BiasAdd", "Add", "Relu"})) {
+      if (num_args != 2) {
+        return errors::InvalidArgument(
+            "FusedConv2DBiasAdd has incompatible num_args");
+      }
+      TF_RETURN_IF_ERROR(GetInputNodes(ng_op_map, op, ng_input, ng_filter,
+                                       ng_bias, ng_input2));
+    } else {
+      if (num_args != 1) {
+        return errors::InvalidArgument(
+            "FusedConv2DBiasAdd has incompatible num_args");
+      }
+      TF_RETURN_IF_ERROR(
+          GetInputNodes(ng_op_map, op, ng_input, ng_filter, ng_bias));
     }
-
-    ng::Output<ng::Node> ng_input, ng_filter, ng_bias, ng_conv;
-    TF_RETURN_IF_ERROR(
-        GetInputNodes(ng_op_map, op, ng_input, ng_filter, ng_bias));
 
     TF_RETURN_IF_ERROR(CreateNgConv(ng_input, ng_filter, ng_conv));
 
@@ -1562,6 +1571,14 @@ static Status TranslateFusedConv2DOp(const Node* op,
           op->name() + "_FusedConv2D_Relu6", ng_add, 0, 6);
       NCHWtoNHWC(op->name(), is_nhwc, ng_relu6);
       SaveNgOp(ng_op_map, op->name(), ng_relu6);
+    } else if (VecStrCmp(fused_ops, {"BiasAdd", "Add", "Relu"})) {
+      NHWCtoNCHW(op->name(), is_nhwc, ng_input2);
+      auto ng_add2 = ConstructNgNode<opset::Add>(
+          op->name() + "_FusedConv2D_Add", ng_add, ng_input2);
+      auto ng_relu = ConstructNgNode<opset::Relu>(
+          op->name() + "_FusedConv2D_Relu", ng_add2);
+      NCHWtoNHWC(op->name(), is_nhwc, ng_relu);
+      SaveNgOp(ng_op_map, op->name(), ng_relu);
     } else {
       NCHWtoNHWC(op->name(), is_nhwc, ng_add);
       SaveNgOp(ng_op_map, op->name(), ng_add);

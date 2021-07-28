@@ -407,11 +407,21 @@ void NGraphEncapsulateOp::Compute(OpKernelContext* ctx) {
         tf_shape.AddDim(dim);
       }
 
+#if TF_VERSION < 2 and TF_MIN_VERSION < 15
+      Tensor* output_tensor = nullptr;
+      OP_REQUIRES_OK(ctx, ctx->allocate_output(i, tf_shape, &output_tensor));
+
+      auto size = ng_output->get_size_in_bytes();
+      auto ie_tensor = static_pointer_cast<IETensor>(ng_output);
+      auto blob = ie_tensor->get_blob();
+      ng_output->read((void*)DMAHelper::base(output_tensor), size);
+#else
       // Zero-copy IE tensor to TF
       IETensorBuffer* tf_buffer =
           new IETensorBuffer(static_pointer_cast<IETensor>(ng_output));
       Tensor tf_tensor(ctx->expected_output_dtype(i), tf_shape, tf_buffer);
       ctx->set_output(i, tf_tensor);
+#endif
     }
   } else {
     int j = 0;

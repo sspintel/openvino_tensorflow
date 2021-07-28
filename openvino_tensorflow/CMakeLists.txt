@@ -76,6 +76,8 @@ target_include_directories(${LIB_NAME} PUBLIC "${NGRAPH_INSTALL_DIR}/include")
 string(REPLACE "." ";" TF_VERSION_LIST ${TensorFlow_VERSION})
 list(GET TF_VERSION_LIST 0 TF_MAJOR_VERSION)
 add_compile_definitions(TF_VERSION=${TF_MAJOR_VERSION})
+list(GET TF_VERSION_LIST 1 TF_MINOR_VERSION)
+add_compile_definitions(TF_MIN_VERSION=${TF_MINOR_VERSION})
 
 #------------------------------------------------------------------------------
 #installation

@@ -1,4 +1,4 @@
-This document provides a list of all validated models that are supported by **OpenVINO™ integration with TensorFlow**. This list is continuously evolving as we enable more operators and models.
+This document provides a list of all validated FP32 models that are supported by **OpenVINO™ integration with TensorFlow**. This list is continuously evolving as we enable more operators and models.
 
 ## TensorFlow-Slim Image Classification Library
 | Model Name | Supported Devices |
@@ -125,3 +125,11 @@ Please follow the instructions on [Keras Applications](https://keras.io/api/appl
 | [yolo-v4](https://github.com/david8862/keras-YOLOv3-model-set)| CPU, iGPU, MYRIAD, VAD-M |
 
 Pre-trained frozen model files are provided for only some of these models. For the rest, please refer to the links provided.
+
+## Quantization Support (Preview)
+
+ **OpenVINO™ integration with TensorFlow** now supports INT8 models quantized using Quantization-Aware Training (QAT) tools such as OpenVINO™ [Neural Network Compression Framework (NNCF)](https://github.com/openvinotoolkit/nncf) and [TensorFlow Model Optimization ToolKit (TFMOT)](https://www.tensorflow.org/model_optimization). This support is currently in a preview state and performance optimizations are in progress.
+ 
+Some examples of NNCF usage to produce quantized models can be found [here](https://github.com/openvinotoolkit/nncf/tree/develop/examples/tensorflow/).
+ 
+ 

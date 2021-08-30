@@ -28,7 +28,7 @@
       git submodule init
       git submodule update
       git checkout pre_gold_dev
-      python3 build_ovtf.py --use_tensorflow_from_location=${TF_PATH} --cxx11_abi_version=0
+      python3 build_ovtf.py  --tf_version=v2.5.0 --openvino_version=2021.4
      workingDirectory: $(WORK_DIR) 
      displayName: "Build"
      

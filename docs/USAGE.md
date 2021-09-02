@@ -1,3 +1,5 @@
+<p>English | <a href="https://github.com/openvino_tensorflow/docs/USAGE_cn.md">简体中文</a></p>
+
 # APIs and environment variables for **OpenVINO™ integration with TensorFlow**
 
 This document describes available Python APIs for **OpenVINO™ integration with TensorFlow**. The first section covers the essential APIs and lines of code required to leverage the functionality of **OpenVINO™ integration with TensorFlow** in TensorFlow applications.
@@ -58,6 +60,14 @@ To disable or enable dynamic fallback use the the following API (When enabled, c
 
     openvino_tensorflow.enable_dynamic_fallback()
     openvino_tensorflow.disable_dynamic_fallback()
+
+To export the translated IRs of the clusters use the API below. This will dump the clusters from the most recently executed model as ".xml" and ".bin" files which can be used for an OpenVINO application later. The first parameter to this API is the output directory. If there is any pre-existing cluster file in the corresponding directory, it will ask user to confirm before overwriting any of the older files. To disable this check, pass a "False" value as the second parameter(optional). Then, any pre-existing IR file will be overwritten without any confirmation if the cluster name is same.
+
+    openvino_tensorflow.export_ir("output/directory/path")
+
+or
+
+    openvino_tensorflow.export_ir("output/directory/path", False)
 
 ## Environment Variables
 

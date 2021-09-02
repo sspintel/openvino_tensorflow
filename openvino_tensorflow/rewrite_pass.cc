@@ -86,8 +86,6 @@ class NGraphEncapsulationPass : public NGraphRewritePass {
       } else {
         NGraphClusterManager::EnableClusterFallback();
       }
-    } else {
-      NGraphClusterManager::EnableClusterFallback();
     }
     bool dynamic_fallback_enabled =
         NGraphClusterManager::IsClusterFallbackEnabled();
@@ -135,6 +133,8 @@ class NGraphEncapsulationPass : public NGraphRewritePass {
       NGraphClusterManager::EvictAllClusters();
       return Status::OK();
     }
+
+    NGraphClusterManager::ClearMRUClusters();
 
     // Now Process the Graph
 

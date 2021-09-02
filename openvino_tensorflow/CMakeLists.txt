@@ -53,9 +53,13 @@ if(OPENVINO_TF_USE_GRAPPLER_OPTIMIZER)
     add_definitions(-DOPENVINO_TF_USE_GRAPPLER_OPTIMIZER)
 endif()
 
+if(OPENVINO_BUILD_VERSION)
+    add_compile_definitions(OPENVINO_BUILD_VERSION="${OPENVINO_BUILD_VERSION}")
+endif()
+
 # If the application is using gcc 7.5, use Lantern Rock built with gcc 8
 set(LANTERN_ROCK_INCLUDE_DIRS $ENV{LANTERN_ROCK_ROOT}/include)
-set(LANTERN_ROCK_LIB_DIRS $ENV{LANTERN_ROCK_ROOT}/lib/static) 
+set(LANTERN_ROCK_LIB_DIRS $ENV{LANTERN_ROCK_ROOT}/lib/static)
 
 add_library(${LIB_NAME} SHARED ${SRC})
 target_link_directories(${LIB_NAME} PUBLIC ${LANTERN_ROCK_LIB_DIRS})
@@ -109,9 +113,6 @@ if(OS_VERSION STREQUAL "\"centos\"")
 else()
 	install(DIRECTORY ${NGRAPH_INSTALL_DIR}/lib/ DESTINATION "${OVTF_INSTALL_LIB_DIR}" )
 endif()
-
-# Install Lantern Rock library
-install(FILES ${LANTERN_ROCK_LIB_DIRS}/libintel-ias3.so DESTINATION "${OVTF_INSTALL_LIB_DIR}")
 
 # Install OpenVINO libraries
 set(IE_LIBS ${OPENVINO_ARTIFACTS_DIR}/deployment_tools/inference_engine/lib/intel64/)

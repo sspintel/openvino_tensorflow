@@ -973,6 +973,7 @@ static Status TranslateConv2DOp(const Node* op,
 
   std::vector<int32> tf_strides;
   std::vector<int32> tf_dilations;
+  std::vector<int32> tf_paddings;
   std::string tf_padding_type;
   std::string tf_data_format;
   TF_RETURN_IF_ERROR(GetNodeAttr(op->attrs(), "strides", &tf_strides));
@@ -1024,9 +1025,28 @@ static Status TranslateConv2DOp(const Node* op,
 
   ng::CoordinateDiff ng_padding_below;
   ng::CoordinateDiff ng_padding_above;
-  Builder::MakePadding(tf_padding_type, ng_image_shape, ng_kernel_shape,
-                       ng_strides, ng_dilations, ng_padding_below,
-                       ng_padding_above);
+  if (tf_padding_type == "EXPLICIT") {
+    TF_RETURN_IF_ERROR(
+        GetNodeAttr(op->attrs(), "explicit_paddings", &tf_paddings));
+    if (is_nhwc) {
+      ng_padding_below.push_back(tf_paddings[2]);
+      ng_padding_below.push_back(tf_paddings[4]);
+      ng_padding_above.push_back(tf_paddings[3]);
+      ng_padding_above.push_back(tf_paddings[5]);
+    } else {
+      ng_padding_below.push_back(tf_paddings[4]);
+      ng_padding_below.push_back(tf_paddings[6]);
+      ng_padding_above.push_back(tf_paddings[5]);
+      ng_padding_above.push_back(tf_paddings[7]);
+    }
+    OVTF_VLOG(3) << " ========== EXPLICIT Padding ========== ";
+    OVTF_VLOG(3) << "ng_padding_below: " << ng::join(ng_padding_below);
+    OVTF_VLOG(3) << "ng_padding_above: " << ng::join(ng_padding_above);
+  } else {
+    Builder::MakePadding(tf_padding_type, ng_image_shape, ng_kernel_shape,
+                         ng_strides, ng_dilations, ng_padding_below,
+                         ng_padding_above);
+  }
 
   ng::Output<ng::Node> ng_conv = ConstructNgNode<opset::Convolution>(
       op->name(), ng_input, ng_filter, ng_strides, ng_padding_below,
@@ -1231,27 +1251,28 @@ static Status TranslateCropAndResizeOp(
       GetNodeAttr(op->attrs(), "extrapolation_value", &tf_extrapolation_value));
 
   auto spatial_shape = ng_input.get_shape();
-  int image_height = spatial_shape[1];
-  int image_width = spatial_shape[2];
-  int image_depth = spatial_shape[3];
+  auto image_height = spatial_shape[1];
+  auto image_width = spatial_shape[2];
+  auto image_depth = spatial_shape[3];
 
   std::vector<float> boxes;
   TF_RETURN_IF_ERROR(GetStaticInputVector(op, 1, static_input_map, &boxes));
 
-  std::vector<int32> box_ind;
+  std::vector<int64> box_ind;
   TF_RETURN_IF_ERROR(GetStaticInputVector(op, 2, static_input_map, &box_ind));
 
-  std::vector<int32> crop_size;
+  std::vector<int64> crop_size;
   TF_RETURN_IF_ERROR(GetStaticInputVector(op, 3, static_input_map, &crop_size));
 
   ng::OutputVector ng_crop_outputs(box_ind.size());
   if (box_ind.size() == 0) {
-    SaveNgOp(
-        ng_op_map, op->name(),
-        ConstructNgNode<opset::Constant>(
-            op->name(), ng::element::f32,
-            ngraph::Shape{0, crop_size.at(0), crop_size.at(1), image_depth},
-            std::vector<float>({})));
+    SaveNgOp(ng_op_map, op->name(),
+             ConstructNgNode<opset::Constant>(
+                 op->name(), ng::element::f32,
+                 ngraph::Shape{0, static_cast<unsigned long>(crop_size.at(0)),
+                               static_cast<unsigned long>(crop_size.at(1)),
+                               image_depth},
+                 std::vector<float>({})));
   } else {
     for (int i = 0; i < box_ind.size(); i++) {
       int y1, x1, y2, x2;
@@ -1278,11 +1299,11 @@ static Status TranslateCropAndResizeOp(
 
       auto begin = ConstructNgNode<opset::Constant>(
           op->name(), ng::element::i64, ng::Shape{4},
-          std::vector<int64>({box_ind[i], y1, x1, 0}));
+          std::vector<int64>({static_cast<int64>(box_ind[i]), y1, x1, 0}));
       auto end = ConstructNgNode<opset::Constant>(
           op->name(), ng::element::i64, ng::Shape{4},
-          std::vector<int64>(
-              {box_ind[i] + 1, y2 + 1, x2 + 1, image_depth + 1}));
+          std::vector<int64>({static_cast<int64>(box_ind[i]) + 1, y2 + 1,
+                              x2 + 1, static_cast<int64>(image_depth + 1)}));
       auto strides = ConstructNgNode<opset::Constant>(
           op->name(), ng::element::i64, ng::Shape{4},
           std::vector<int64>({1, stride_height, stride_width, 1}));
@@ -2703,7 +2724,7 @@ static Status TranslateResizeBilinearOp(
         opset::Interpolate::CoordinateTransformMode::align_corners;
 
   auto input_shape = ng_inp.get_shape();
-  std::vector<int32> spatial_shape = {input_shape[1], input_shape[2]};
+  std::vector<unsigned long> spatial_shape = {input_shape[1], input_shape[2]};
   auto ng_spatial_shape = ConstructNgNode<opset::Constant>(
       op->name(), ng::element::i32, ng::Shape{2}, spatial_shape);
   auto ng_input_shape = ConstructNgNode<opset::Convert>(
@@ -2743,7 +2764,7 @@ static Status TranslateResizeNearestNeighborOp(
       opset::Interpolate::NearestMode::round_prefer_floor;
 
   auto input_shape = ng_inp.get_shape();
-  std::vector<int32> spatial_shape = {input_shape[1], input_shape[2]};
+  std::vector<unsigned long> spatial_shape = {input_shape[1], input_shape[2]};
   auto ng_spatial_shape = ConstructNgNode<opset::Constant>(
       op->name(), ng::element::i32, ng::Shape{2}, spatial_shape);
   auto ng_input_shape = ConstructNgNode<opset::Convert>(

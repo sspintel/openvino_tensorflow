@@ -145,7 +145,7 @@ def main():
     parser.add_argument(
         '--openvino_version',
         help="Openvino version to be used for building from source",
-        default='2021.3')
+        default='2021.4')
 
     parser.add_argument(
         '--python_executable',
@@ -386,7 +386,11 @@ def main():
             else:
                 tf_fmwk_lib_name = 'libtensorflow_framework.so.2'
             if (platform.system() == 'Darwin'):
-                tf_fmwk_lib_name = 'libtensorflow_framework.2.dylib'
+                if (tf_version.startswith("v1.") or
+                    (tf_version.startswith("1."))):
+                    tf_fmwk_lib_name = 'libtensorflow_framework.1.dylib'
+                else:
+                    tf_fmwk_lib_name = 'libtensorflow_framework.2.dylib'
             import tensorflow as tf
             tf_lib_dir = tf.sysconfig.get_lib()
             tf_lib_file = os.path.join(tf_lib_dir, tf_fmwk_lib_name)
@@ -444,17 +448,17 @@ def main():
         )
 
         if (arguments.openvino_version == "2021.4"):
-            openvino_branch = "releases/2021/4"
+            openvino_release_tag = "releases/2021/4"
         elif (arguments.openvino_version == "2021.3"):
-            openvino_branch = "releases/2021/3"
+            openvino_release_tag = "2021.3"
         elif (arguments.openvino_version == "2021.2"):
-            openvino_branch = "releases/2021/2"
+            openvino_release_tag = "2021.2"
 
         # Download OpenVINO
         download_repo(
             "openvino",
             "https://github.com/openvinotoolkit/openvino",
-            openvino_branch,
+            openvino_release_tag,
             submodule_update=True)
         openvino_src_dir = os.path.join(os.getcwd(), "openvino")
         print("OV_SRC_DIR: ", openvino_src_dir)
@@ -516,6 +520,10 @@ def main():
     if arguments.python_executable != '':
         openvino_tf_cmake_flags.extend(
             ["-DPYTHON_EXECUTABLE=%s" % arguments.python_executable])
+
+    # add openvino build version as compile time definition
+    openvino_tf_cmake_flags.extend(
+        ["-DOPENVINO_BUILD_VERSION=%s" % str(arguments.openvino_version)])
 
     # Now build the bridge
     ov_tf_whl = build_openvino_tf(build_dir, artifacts_location,

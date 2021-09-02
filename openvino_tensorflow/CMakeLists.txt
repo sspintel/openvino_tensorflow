@@ -53,8 +53,9 @@ if(OPENVINO_TF_USE_GRAPPLER_OPTIMIZER)
     add_definitions(-DOPENVINO_TF_USE_GRAPPLER_OPTIMIZER)
 endif()
 
+# If the application is using gcc 7.5, use Lantern Rock built with gcc 8
 set(LANTERN_ROCK_INCLUDE_DIRS $ENV{LANTERN_ROCK_ROOT}/include)
-set(LANTERN_ROCK_LIB_DIRS $ENV{LANTERN_ROCK_ROOT}/lib/static)
+set(LANTERN_ROCK_LIB_DIRS $ENV{LANTERN_ROCK_ROOT}/lib/static) 
 
 add_library(${LIB_NAME} SHARED ${SRC})
 target_link_directories(${LIB_NAME} PUBLIC ${LANTERN_ROCK_LIB_DIRS})

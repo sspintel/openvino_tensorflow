@@ -23,4 +23,6 @@ class NGraphLogMessage : public tensorflow::internal::LogMessage {
   if (OVTF_VLOG_IS_ON(lvl)) \
   ::tensorflow::internal::LogMessage(__FILE__, __LINE__, tensorflow::INFO)
 
+void LRLogMessage (std::wstring message); 
+
 #endif  // NGRAPH_LOG_H_

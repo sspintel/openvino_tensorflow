@@ -155,7 +155,7 @@ class NGraphEncapsulationPass : public NGraphRewritePass {
 #endif
 
     //Ovtf telemetry initialization
-    std::wcout << "--------------------------------------------------------------" << std::endl;
+    LRLogMessage(L"--------------------------------------------------------------");
     std::wstring app_name{ L"OVTF" };
     std::wstring telemetry_id{ L"1dac89cb-04a1-4695-86b0-1d95c3d93731" };
     std::wstring app_version{ L"ovtf0.4" };
@@ -176,7 +176,7 @@ class NGraphEncapsulationPass : public NGraphRewritePass {
       init_vals,
       countof(init_keys));
     FAIL_ON_ERR(res);
-    std::wcout << "Telemetry initialized ... " << std::endl;
+    LRLogMessage(L"Telemetry initialized ...");
     //Telemetry initialization End
 
     //Ovtf telemetry recording that the TF app has initialized 
@@ -186,7 +186,7 @@ class NGraphEncapsulationPass : public NGraphRewritePass {
     std::wstring event_name{ L"TF_App_Initialized" };
     res = RecordEventEx(ovtf_handle, nullptr, event_name.c_str(), 1, 1.0, ekeys, evals, countof(ekeys));
     FAIL_ON_ERR(res);
-    std::wcout << "Event recorded: " << event_name.c_str() << std::endl;
+    LRLogMessage(L"Event recorded: " + event_name);
     //End: Ovtf telemetry recording that the TF app has initialized 
 
     ocm::Framework_Names fName = ocm::Framework_Names::TF;
@@ -236,7 +236,7 @@ class NGraphEncapsulationPass : public NGraphRewritePass {
     // these ops are not marked for clustering
     std::set<string>  inert_op_set = {"NoOp", "_Arg", "_Retval"};
 
-    std::wcout << "Recording events for layers in the model..." << std::endl;
+    LRLogMessage(L"Recording events for layers in the model...");
     tensorflow::Graph* tel_graph = options.graph->get();
     for (Node* node : tel_graph->nodes()) {
       const auto& optype = node->type_string();
@@ -259,23 +259,23 @@ class NGraphEncapsulationPass : public NGraphRewritePass {
       event_name = L"OVTF_Initialized";
       auto res = RecordEventEx(ovtf_handle, nullptr, event_name.c_str(), 1, 1.0, ekeys, evals, countof(ekeys));
       FAIL_ON_ERR(res);
-      std::wcout << "Event recorded: " << event_name.c_str() << std::endl;
+      LRLogMessage(L"Event recorded: " + event_name);
     }
     event_name = (model_fully_supported) ? L"Model_Fully_Supported" : L"Model_NOT_Fully_Supported";
     res = RecordEventEx(ovtf_handle, nullptr, event_name.c_str(), 1, 1.0, ekeys, evals, countof(ekeys));
-    FAIL_ON_ERR(res);
-    std::wcout << "Event recorded: " << event_name.c_str() << std::endl;
+    FAIL_ON_ERR(res); 
+    LRLogMessage(L"Event recorded: " + event_name);
     // End: Ovtf telemetry recording all ops and flags
 
     // OVTF telemetry deinitialization and upload
     res = Deinitialize(ovtf_handle);
     FAIL_ON_ERR(res);
-    std::wcout << "Telemetry deinitialized ... " << std::endl;
-    std::wcout << "Start uploading ..." << std::endl;
+    LRLogMessage(L"Telemetry deinitialized ... ");
+    LRLogMessage(L"Start uploading ...");
     res = Upload(telemetry_id.c_str(), LR"({"show":false, "wait": true})");
     FAIL_ON_ERR(res);
-    std::wcout << "Uploading finished! " << std::endl;
-    std::wcout << "--------------------------------------------------------------" << std::endl;
+    LRLogMessage(L"Uploading finished! ");
+    LRLogMessage(L"--------------------------------------------------------------");
     // End: OVTF telemetry deinitialization and upload 
 
     // 4. Encapsulate clusters then, if requested, dump the graphs.

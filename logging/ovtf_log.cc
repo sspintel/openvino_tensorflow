@@ -35,3 +35,15 @@ tensorflow::int64 NGraphLogMessage::MinNGraphVLogLevel() {
   const char* tf_env_var_val = std::getenv("OPENVINO_TF_VLOG_LEVEL");
   return LogLevelStrToInt(tf_env_var_val);
 }
+
+// To turn LR debug logging on set envvar OVTFLRLOG=1
+void LRLogMessage (wstring message) {
+  const char* ovtflr_env_val = std::getenv("OPENVINO_TF_LR_LOG");
+  string val_to_str(ovtflr_env_val);
+  istringstream ss(val_to_str);
+  int logOn = 0;
+  ss >> logOn;
+  if ( logOn == 1 ) {
+    wcout << message << endl;
+  } 
+}

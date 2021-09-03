@@ -54,14 +54,9 @@ std::string NGraphLogMessage::GetTimeStampForLogging() {
 
 }
 
-// To turn LR debug logging on set envvar OVTFLRLOG=1
+// LR debug logging as long as envvar OPENVINO_TF_LR_LOG is not null
 void LRLogMessage (wstring message) {
-  const char* ovtflr_env_val = std::getenv("OPENVINO_TF_LR_LOG");
-  string val_to_str(ovtflr_env_val);
-  istringstream ss(val_to_str);
-  int logOn = 0;
-  ss >> logOn;
-  if ( logOn == 1 ) {
+  if (std::getenv("OPENVINO_TF_LR_LOG")) {
     wcout << message << endl;
   } 
 }
